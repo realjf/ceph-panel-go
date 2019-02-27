@@ -50,7 +50,7 @@ func NewLibRados(cluster_name string, user_name string) LibRados {
 }
 
 // 创建集群句柄
-func (lib *libRados) Rados_create2(flags C.uint64_t) (int, error) {
+func (lib *libRados) Rados_create2(flags uint64) (int, error) {
 	err := C.rados_create2(lib.cluster, lib.cluster_name, lib.user_name, flags)
 	if err < 0 {
 		return err, errors.New("Couldn't create the ceph cluster handle! ")
