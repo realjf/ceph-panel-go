@@ -1,4 +1,4 @@
-package storage
+package ceph
 
 type LibRbd interface {
 

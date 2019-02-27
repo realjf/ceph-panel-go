@@ -1,4 +1,4 @@
-package storage
+package ceph
 
 // 文件系统
 
