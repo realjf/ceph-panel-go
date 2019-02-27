@@ -1,5 +1,6 @@
 package storage
 
+// 基础库
 
 /*
 #include <stdio.h>
