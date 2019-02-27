@@ -30,6 +30,9 @@ type LibRados interface {
 	Rados_shutdown()
 	Rados_setxattr(object_name []byte, attr_name []byte, value []byte) error
 	Rados_getxattr(object_name []byte, attr_name []byte, size uint) (interface{}, error)
+	Rados_rmxattr(object_name []byte, attr_name []byte) error
+
+	Rados_aio_read() (interface{}, error)
 }
 
 type libRados struct {
@@ -129,6 +132,14 @@ func (lib *libRados) Rados_getxattr(object_name []byte, attr_name []byte, size u
 		return nil, errors.New("cannot get extended attribute on object[" + string(object_name) + "] " + fmt.Sprintf("%v", err))
 	}
 	return buf, nil
+}
+
+func (lib *libRados) Rados_rmxattr(object_name []byte, attr_name []byte) error {
+	err := C.rados_rmxattr(lib.io, (*C.char)(unsafe.Pointer(&object_name)), (*C.char)(unsafe.Pointer(&attr_name)))
+	if int32(err) < 0 {
+		return errors.New("cannot remove extended attribute on object[" + string(object_name) + "] " + fmt.Sprintf("%v", err))
+	}
+	return nil
 }
 
 // 获取版本号
