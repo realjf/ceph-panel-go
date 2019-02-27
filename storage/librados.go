@@ -32,7 +32,7 @@ type LibRados interface {
 }
 
 type libRados struct {
-	cluster *C.rados_t // 集群句柄
+	cluster C.rados_t // 集群句柄
 
 	cluster_name []byte // 集群名称
 	user_name []byte    // 用户名
@@ -51,7 +51,7 @@ func NewLibRados(cluster_name []byte, user_name []byte) *libRados {
 
 // 创建集群句柄
 func (lib *libRados) Rados_create2(flags uint32) error {
-	err := C.rados_create2(lib.cluster, (*C.char)(unsafe.Pointer(&lib.cluster_name)), (*C.char)(unsafe.Pointer(&lib.user_name)), (C.ulong)(flags))
+	err := C.rados_create2(&lib.cluster, (*C.char)(unsafe.Pointer(&lib.cluster_name)), (*C.char)(unsafe.Pointer(&lib.user_name)), (C.ulong)(flags))
 	if err < 0 {
 		return errors.New("Couldn't create the ceph cluster handle! ")
 	}
@@ -60,7 +60,7 @@ func (lib *libRados) Rados_create2(flags uint32) error {
 
 // 读取配置文件
 func (lib *libRados) Rados_conf_read_file(path []byte) error {
-	err := C.rados_conf_read_file(*lib.cluster, (*C.char)(unsafe.Pointer(&path)))
+	err := C.rados_conf_read_file(lib.cluster, (*C.char)(unsafe.Pointer(&path)))
 	if err < 0 {
 		return errors.New("Cannot read config file: " + string(path))
 	}
@@ -69,7 +69,7 @@ func (lib *libRados) Rados_conf_read_file(path []byte) error {
 
 // 连接
 func (lib *libRados) Rados_connect() error {
-	err := C.rados_connect(*lib.cluster)
+	err := C.rados_connect(lib.cluster)
 	if err < 0 {
 		return errors.New("cannot connect to cluster")
 	}
@@ -80,7 +80,7 @@ func (lib *libRados) Rados_connect() error {
 // 创建io上下文
 func (lib *libRados) Rados_ioctx_create(pool_name []byte, io C.rados_ioctx_t) error {
 	lib.pool_name = pool_name
-	err := C.rados_ioctx_create(*lib.cluster, (*C.char)(unsafe.Pointer(&lib.pool_name)), &lib.io)
+	err := C.rados_ioctx_create(lib.cluster, (*C.char)(unsafe.Pointer(&lib.pool_name)), &lib.io)
 	if err < 0 {
 		return errors.New("cannot open rados pool[" + string(pool_name) + "]")
 	}
@@ -107,7 +107,7 @@ func (lib *libRados) Rados_ioctx_destroy() {
 
 // 关闭集群句柄
 func (lib *libRados) Rados_shutdown() {
-	C.rados_shutdown(*lib.cluster)
+	C.rados_shutdown(lib.cluster)
 }
 
 // 设置属性值
