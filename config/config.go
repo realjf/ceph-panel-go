@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"github.com/BurntSushi/toml"
-	"goframe/exception"
-	"goframe/utils"
+	"ceph-panel-go/exception"
+	"ceph-panel-go/utils"
 )
 
 type IConfig interface {

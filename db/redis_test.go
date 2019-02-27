@@ -1,7 +1,7 @@
 package db
 
 import (
-	"goframe/config"
+	"ceph-panel-go/config"
 	"testing"
 	"time"
 )

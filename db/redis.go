@@ -3,10 +3,10 @@ package db
 import (
 	"fmt"
 	"github.com/go-redis/redis"
-	"goframe/config"
-	"goframe/exception"
-	"goframe/utils"
-	"goframe/middleware"
+	"ceph-panel-go/config"
+	"ceph-panel-go/exception"
+	"ceph-panel-go/utils"
+	"ceph-panel-go/middleware"
 )
 
 var RedisClient *redis.Client

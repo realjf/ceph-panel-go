@@ -3,10 +3,10 @@ package db
 import (
 	"fmt"
 	"github.com/pangudashu/memcache"
-	"goframe/config"
-	"goframe/exception"
-	"goframe/middleware"
-	"goframe/utils"
+	"ceph-panel-go/config"
+	"ceph-panel-go/exception"
+	"ceph-panel-go/middleware"
+	"ceph-panel-go/utils"
 	"time"
 )
 

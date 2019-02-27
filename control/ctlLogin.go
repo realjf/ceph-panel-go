@@ -1,8 +1,8 @@
 package control
 
 import (
-	"goframe/config"
-	"goframe/template"
+	"ceph-panel-go/config"
+	"ceph-panel-go/template"
 	"net/http"
 )
 

@@ -1,7 +1,7 @@
 package api
 
 import (
-	"goframe/config"
+	"ceph-panel-go/config"
 	"net/http"
 )
 

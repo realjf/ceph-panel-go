@@ -3,10 +3,10 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"goframe/config"
-	"goframe/exception"
-	"goframe/middleware"
-	"goframe/utils"
+	"ceph-panel-go/config"
+	"ceph-panel-go/exception"
+	"ceph-panel-go/middleware"
+	"ceph-panel-go/utils"
 	"time"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -53,5 +53,5 @@ func (db *MySQLDriver) Init() {
 	DbConn.SetMaxOpenConns(db.MaxOpenConns)
 	DbConn.SetConnMaxLifetime(time.Second * time.Duration(60))
 
-	middleware.Logger.Logger.Info("init db ...")
+	middleware.Logger.Logger.Info("init mysql...")
 }

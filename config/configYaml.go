@@ -2,8 +2,8 @@ package config
 
 import (
 	"fmt"
-	"goframe/exception"
-	"goframe/utils"
+	"ceph-panel-go/exception"
+	"ceph-panel-go/utils"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"sync"

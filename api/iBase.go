@@ -2,10 +2,10 @@ package api
 
 import (
 	"fmt"
-	"goframe/config"
-	"goframe/exception"
-	"goframe/template"
-	"goframe/utils"
+	"ceph-panel-go/config"
+	"ceph-panel-go/exception"
+	"ceph-panel-go/template"
+	"ceph-panel-go/utils"
 	"log"
 	"net/http"
 )

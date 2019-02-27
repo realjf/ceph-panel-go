@@ -2,14 +2,14 @@ package main
 
 import (
 	"flag"
-	"goframe/config"
-	"goframe/exception"
-	"goframe/middleware"
-	"goframe/router"
+	"ceph-panel-go/config"
+	"ceph-panel-go/exception"
+	"ceph-panel-go/middleware"
+	"ceph-panel-go/router"
 	"golang.org/x/net/http2"
 	"net/http"
 	"time"
-	"goframe/db"
+	"ceph-panel-go/db"
 )
 
 var (

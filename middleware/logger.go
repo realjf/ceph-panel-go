@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/op/go-logging"
-	"goframe/utils"
+	"ceph-panel-go/utils"
 	"net/http"
 	"os"
 	"regexp"

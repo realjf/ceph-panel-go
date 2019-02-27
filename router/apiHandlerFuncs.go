@@ -1,8 +1,8 @@
 package router
 
 import (
-	"goframe/api"
-	"goframe/config"
+	"ceph-panel-go/api"
+	"ceph-panel-go/config"
 	"net/http"
 
 	"github.com/gorilla/mux"

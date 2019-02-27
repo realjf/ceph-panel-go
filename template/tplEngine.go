@@ -2,7 +2,7 @@ package template
 
 import (
 	"encoding/json"
-	"goframe/exception"
+	"ceph-panel-go/exception"
 	"html/template"
 	"net/http"
 )

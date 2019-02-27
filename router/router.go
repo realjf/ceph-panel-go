@@ -3,8 +3,8 @@ package router
 import (
 	"flag"
 	"github.com/gorilla/mux"
-	"goframe/config"
-	"goframe/middleware"
+	"ceph-panel-go/config"
+	"ceph-panel-go/middleware"
 	"net/http"
 )
 
