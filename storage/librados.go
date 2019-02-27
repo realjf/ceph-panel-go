@@ -7,8 +7,6 @@ package storage
 #include <stdlib.h>
 #include <string.h>
 #include <rados/librados.h>
-
-
 */
 import "C"
 
@@ -24,7 +22,7 @@ type LibRados interface {
 	Rados_conf_read_file(path *C.char) (int, error)
 	Rados_connect() (int, error)
 	Rados_ioctx_create(pool_name *C.char, io C.rados_ioctx_t) (int, error)
-	Rados_write(key string, value string, offset C.unit64_t) (int, error)
+	Rados_write(key string, value string, offset uint64) (int, error)
 	Rados_ioctx_destroy()
 	Rados_shutdown()
 	Rados_setxattr(object_name *C.char, attr_name *C.char, value string) (int, error)
@@ -90,7 +88,7 @@ func (lib *libRados) Rados_ioctx_create(pool_name *C.char, io C.rados_ioctx_t) (
 }
 
 // 写入数据
-func (lib *libRados) Rados_write(key string, value string, offset C.unit64_t) (int, error) {
+func (lib *libRados) Rados_write(key string, value string, offset uint64) (int, error) {
 	buf := new(bytes.Buffer)
 	_ = binary.Write(buf, binary.LittleEndian, value)
 	err := C.rados_write(lib.io, key, buf, buf.Bytes(), offset)
