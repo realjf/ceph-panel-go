@@ -26,8 +26,8 @@ type LibRados interface {
 	Rados_write(key string, value string, offset C.unit64_t) (int, error)
 	Rados_ioctx_destroy()
 	Rados_shutdown()
-	Rados_setxattr() (int, error)
-
+	Rados_setxattr(object_name *C.char, attr_name *C.char, value string) (int, error)
+	Rados_getxattr(object_name *C.char, attr_name *C.char, size C.uint) (interface{}, error)
 }
 
 type libRados struct {
@@ -91,7 +91,7 @@ func (lib *libRados) Rados_ioctx_create(pool_name *C.char, io C.rados_ioctx_t) (
 // 写入数据
 func (lib *libRados) Rados_write(key string, value string, offset C.unit64_t) (int, error) {
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, value)
+	_ = binary.Write(buf, binary.LittleEndian, value)
 	err := C.rados_write(lib.io, key, buf, buf.Bytes(), offset)
 	if err < 0 {
 		return err, errors.New("cannot write object to pool[" + lib.pool_name + "]")
@@ -111,9 +111,23 @@ func (lib *libRados) Rados_shutdown() {
 }
 
 // 设置属性值
-func (lib *libRados) Rados_setxattr() (int, error) {
+func (lib *libRados) Rados_setxattr(object_name *C.char, attr_name *C.char, value string) (int, error) {
+	buf := new(bytes.Buffer)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+	err := C.rados_setxattr(lib.io, object_name, attr_name, buf, buf.Bytes())
+	if err < 0 {
+		return err, errors.New("cannot set extended attribute on object[" + object_name + "]")
+	}
+	return err, nil
+}
 
-	return 0, nil
+func (lib *libRados) Rados_getxattr(object_name *C.char, attr_name *C.char, size C.uint) (interface{}, error) {
+	buf := new(bytes.Buffer)
+	err := C.rados_getxattr(lib.io, object_name, attr_name, buf, size)
+	if err < 0 {
+		return nil, errors.New("cannot get extended attribute on object[" + object_name + "]")
+	}
+	return buf, nil
 }
 
 // 获取版本号
