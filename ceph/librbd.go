@@ -1,11 +1,17 @@
 package ceph
 
-type LibRbd interface {
+type LibRBD interface {
 
 }
 
-type libRbd struct {
+type libRBD struct {
 
+}
+
+func NewLibRBD() *libRBD {
+	return &libRBD{
+
+	}
 }
 
 
