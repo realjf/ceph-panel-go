@@ -8,6 +8,7 @@ package ceph
 #include <stdlib.h>
 #include <string.h>
 #include <rados/librados.h>
+#include <rados/rados_types.h>
 */
 import "C"
 
@@ -24,15 +25,23 @@ type LibRados interface {
 	Rados_create2(flags uint32) error
 	Rados_conf_read_file(path []byte) error
 	Rados_connect() error
-	Rados_ioctx_create(pool_name []byte, io C.rados_ioctx_t) error
 	Rados_write(key []byte, value []byte, offset uint) error
-	Rados_ioctx_destroy()
 	Rados_shutdown()
 	Rados_setxattr(object_name []byte, attr_name []byte, value []byte) error
 	Rados_getxattr(object_name []byte, attr_name []byte, size uint) (interface{}, error)
 	Rados_rmxattr(object_name []byte, attr_name []byte) error
 
+	Rados_ioctx_create(pool_name []byte, io C.rados_ioctx_t) error
+	Rados_write_full(object_name []byte, attr_name []byte) error
+	Rados_ioctx_destroy()
+
+	// 异步IO
+	Rados_aio_create_completion() error
+	Rados_aio_write() error
 	Rados_aio_read() (interface{}, error)
+	Rados_aio_write_full() error
+	Rados_aio_append() error
+	Rados_aio_release()
 }
 
 type libRados struct {
@@ -43,7 +52,9 @@ type libRados struct {
 
 	pool_name []byte    // 对象池
 
-	io C.rados_ioctx_t
+	io C.rados_ioctx_t // 同步IO上下文
+
+	comp C.rados_completion_t // 异步IO
 }
 
 func NewLibRados(cluster_name []byte, user_name []byte) *libRados {
@@ -140,6 +151,58 @@ func (lib *libRados) Rados_rmxattr(object_name []byte, attr_name []byte) error {
 		return errors.New("cannot remove extended attribute on object[" + string(object_name) + "] " + fmt.Sprintf("%v", err))
 	}
 	return nil
+}
+
+func (lib *libRados) Rados_write_full(object_name []byte, value []string) error {
+	buf := new(bytes.Buffer)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+	err := C.rados_write_full(lib.io, (*C.char)(unsafe.Pointer(&object_name)), (*C.char)(unsafe.Pointer(&buf)), (C.ulong)(len(buf.Bytes())))
+	if int32(err) < 0 {
+		lib.Rados_ioctx_destroy()
+		lib.Rados_shutdown()
+		return errors.New("cannot write pool[" + string(object_name) + "] " + fmt.Sprintf("%v", err))
+	}
+	return nil
+}
+
+func (lib *libRados) Rados_aio_create_completion() error {
+	err := C.rados_aio_create_completion(C.NULL, C.NULL, C.NULL, &lib.comp)
+	if int32(err) < 0 {
+		lib.Rados_ioctx_destroy()
+		lib.Rados_shutdown()
+		return errors.New("cannot create aio completion " + fmt.Sprintf("%v", err))
+	}
+	return nil
+}
+
+func (lib *libRados) Rados_aio_write(key []byte, value []byte, offset uint) error {
+	buf := new(bytes.Buffer)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+	err := C.rados_aio_write(lib.io, (*C.char)(unsafe.Pointer(&key)), lib.comp, (*C.char)(unsafe.Pointer(&buf)), (C.ulong)(len(buf.Bytes())), (C.size_t)(offset))
+	if int32(err) < 0 {
+		lib.Rados_aio_release()
+		lib.Rados_ioctx_destroy()
+		lib.Rados_shutdown()
+		return errors.New("cannot not schedule aio write " + fmt.Sprintf("%v", err))
+	}
+
+	return nil
+}
+
+func (lib *libRados) Rados_aio_read() (interface{}, error) {
+
+}
+
+func (lib *libRados) Rados_aio_write_full() error {
+
+}
+
+func (lib *libRados) Rados_aio_append() error {
+
+}
+
+func (lib *libRados) Rados_aio_release() {
+	C.rados_aio_release(lib.comp)
 }
 
 // 获取版本号
