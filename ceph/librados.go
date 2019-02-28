@@ -191,14 +191,17 @@ func (lib *libRados) Rados_aio_write(key []byte, value []byte, offset uint) erro
 
 func (lib *libRados) Rados_aio_read() (interface{}, error) {
 
+	return nil,nil
 }
 
 func (lib *libRados) Rados_aio_write_full() error {
 
+	return nil
 }
 
 func (lib *libRados) Rados_aio_append() error {
 
+	return nil
 }
 
 func (lib *libRados) Rados_aio_release() {
