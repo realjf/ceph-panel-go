@@ -21,23 +21,25 @@ import (
 )
 
 type LibRados interface {
-	Rados_version(major *int, minor *int, extra *int) string
-	Rados_create2(flags uint32) error
+	Rados_create2(flags uint64) error
+	Rados_create() error
 	Rados_conf_read_file(path []byte) error
 	Rados_connect() error
 	Rados_write(key []byte, value []byte, offset uint) error
 	Rados_shutdown()
+
+	Rados_ioctx_create(pool_name []byte) error
+	Rados_write_full(object_name []byte, value []byte) error
+	Rados_ioctx_destroy()
+
 	Rados_setxattr(object_name []byte, attr_name []byte, value []byte) error
 	Rados_getxattr(object_name []byte, attr_name []byte, size uint) (interface{}, error)
 	Rados_rmxattr(object_name []byte, attr_name []byte) error
 
-	Rados_ioctx_create(pool_name []byte, io C.rados_ioctx_t) error
-	Rados_write_full(object_name []byte, attr_name []byte) error
-	Rados_ioctx_destroy()
 
 	// 异步IO
 	Rados_aio_create_completion() error
-	Rados_aio_write() error
+	Rados_aio_write(key []byte, value []byte, offset uint) error
 	Rados_aio_read() (interface{}, error)
 	Rados_aio_write_full() error
 	Rados_aio_append() error
@@ -65,8 +67,16 @@ func NewLibRados(cluster_name []byte, user_name []byte) *libRados {
 }
 
 // 创建集群句柄
-func (lib *libRados) Rados_create2(flags uint32) error {
-	err := C.rados_create2(&lib.cluster, (*C.char)(unsafe.Pointer(&lib.cluster_name)), (*C.char)(unsafe.Pointer(&lib.user_name)), (C.ulong)(flags))
+func (lib *libRados) Rados_create2(flags uint64) error {
+	err := C.rados_create2(&lib.cluster, (*C.char)(unsafe.Pointer(&lib.cluster_name)), (*C.char)(unsafe.Pointer(&lib.user_name)), (C.uint64_t)(flags))
+	if int32(err) < 0 {
+		return errors.New("Couldn't create the ceph cluster handle! " + fmt.Sprintf("%v", err))
+	}
+	return nil
+}
+
+func (lib *libRados) Rados_create() error  {
+	err := C.rados_create(&lib.cluster, (*C.char)(nil))
 	if int32(err) < 0 {
 		return errors.New("Couldn't create the ceph cluster handle! " + fmt.Sprintf("%v", err))
 	}
@@ -92,16 +102,6 @@ func (lib *libRados) Rados_connect() error {
 	return nil
 }
 
-// 创建io上下文
-func (lib *libRados) Rados_ioctx_create(pool_name []byte, io C.rados_ioctx_t) error {
-	lib.pool_name = pool_name
-	err := C.rados_ioctx_create(lib.cluster, (*C.char)(unsafe.Pointer(&lib.pool_name)), &lib.io)
-	if int32(err) < 0 {
-		return errors.New("cannot open rados pool[" + string(pool_name) + "] " + fmt.Sprintf("%v", err))
-	}
-
-	return nil
-}
 
 // 写入数据
 func (lib *libRados) Rados_write(key []byte, value []byte, offset uint) error {
@@ -115,15 +115,40 @@ func (lib *libRados) Rados_write(key []byte, value []byte, offset uint) error {
 	return nil
 }
 
+// 关闭集群句柄
+func (lib *libRados) Rados_shutdown() {
+	C.rados_shutdown(lib.cluster)
+}
+
+// 创建io上下文
+func (lib *libRados) Rados_ioctx_create(pool_name []byte) error {
+	lib.pool_name = pool_name
+	err := C.rados_ioctx_create(lib.cluster, (*C.char)(unsafe.Pointer(&lib.pool_name)), &lib.io)
+	if int32(err) < 0 {
+		return errors.New("cannot open rados pool[" + string(pool_name) + "] " + fmt.Sprintf("%v", err))
+	}
+
+	return nil
+}
+
+func (lib *libRados) Rados_write_full(object_name []byte, value []byte) error {
+	buf := new(bytes.Buffer)
+	_ = binary.Write(buf, binary.LittleEndian, value)
+	err := C.rados_write_full(lib.io, (*C.char)(unsafe.Pointer(&object_name)), (*C.char)(unsafe.Pointer(&buf)), (C.ulong)(len(buf.Bytes())))
+	if int32(err) < 0 {
+		lib.Rados_ioctx_destroy()
+		lib.Rados_shutdown()
+		return errors.New("cannot write pool[" + string(object_name) + "] " + fmt.Sprintf("%v", err))
+	}
+	return nil
+}
+
 // 销毁io上下文
 func (lib *libRados) Rados_ioctx_destroy() {
 	C.rados_ioctx_destroy(lib.io)
 }
 
-// 关闭集群句柄
-func (lib *libRados) Rados_shutdown() {
-	C.rados_shutdown(lib.cluster)
-}
+
 
 // 设置属性值
 func (lib *libRados) Rados_setxattr(object_name []byte, attr_name []byte, value []byte) error {
@@ -153,20 +178,8 @@ func (lib *libRados) Rados_rmxattr(object_name []byte, attr_name []byte) error {
 	return nil
 }
 
-func (lib *libRados) Rados_write_full(object_name []byte, value []string) error {
-	buf := new(bytes.Buffer)
-	_ = binary.Write(buf, binary.LittleEndian, value)
-	err := C.rados_write_full(lib.io, (*C.char)(unsafe.Pointer(&object_name)), (*C.char)(unsafe.Pointer(&buf)), (C.ulong)(len(buf.Bytes())))
-	if int32(err) < 0 {
-		lib.Rados_ioctx_destroy()
-		lib.Rados_shutdown()
-		return errors.New("cannot write pool[" + string(object_name) + "] " + fmt.Sprintf("%v", err))
-	}
-	return nil
-}
-
 func (lib *libRados) Rados_aio_create_completion() error {
-	err := C.rados_aio_create_completion(C.NULL, C.NULL, C.NULL, &lib.comp)
+	err := C.rados_aio_create_completion(nil, nil, nil, &lib.comp)
 	if int32(err) < 0 {
 		lib.Rados_ioctx_destroy()
 		lib.Rados_shutdown()
@@ -208,7 +221,3 @@ func (lib *libRados) Rados_aio_release() {
 	C.rados_aio_release(lib.comp)
 }
 
-// 获取版本号
-func (lib *libRados) Rados_version(major *int, minor *int, extra *int) string {
-	return ""
-}
