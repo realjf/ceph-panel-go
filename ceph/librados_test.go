@@ -9,7 +9,7 @@ func TestNewLibRados(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 	t.Log("created a cluster handle")
-	err = librados.Rados_conf_read_file("test")
+	err = librados.Rados_conf_read_file("/etc/ceph/ceph.conf")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -20,4 +20,16 @@ func TestNewLibRados(t *testing.T) {
 	}
 	t.Log("connect to the cluster")
 
+	err = librados.Rados_ioctx_create("data")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	t.Log("create io context")
+	err = librados.Rados_write_full("greeting", []byte("hello"))
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+
+	t.Fatalf("com")
 }
