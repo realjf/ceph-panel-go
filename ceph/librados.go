@@ -44,6 +44,11 @@ type LibRados interface {
 	Rados_aio_write_full() error
 	Rados_aio_append() error
 	Rados_aio_release()
+	Rados_aio_wait_for_complete() // in memory
+	Rados_aio_wait_for_safe() // on disk
+	Rados_aio_flush() error
+	Rados_aio_flush_async() error
+	Rados_aio_cancel() error
 }
 
 type libRados struct {
@@ -221,3 +226,34 @@ func (lib *libRados) Rados_aio_release() {
 	C.rados_aio_release(lib.comp)
 }
 
+func (lib *libRados) Rados_aio_wait_for_complete() {
+	C.rados_aio_wait_for_complete(lib.comp)
+}
+
+func (lib *libRados) Rados_aio_wait_for_safe() {
+	C.rados_aio_wait_for_safe(lib.comp)
+}
+
+func (lib *libRados) Rados_aio_flush() error {
+	err := C.rados_aio_flush(lib.io)
+	if int32(err) < 0 {
+		return errors.New("flush to disk error " + fmt.Sprintf("%v", err))
+	}
+	return nil
+}
+
+func (lib *libRados) Rados_aio_flush_async() error {
+	err := C.rados_aio_flush_async(lib.io, lib.comp)
+	if int32(err) < 0 {
+		return errors.New("cannot not schedule flush to disk " + fmt.Sprintf("%v", err))
+	}
+	return nil
+}
+
+func (lib *libRados) Rados_aio_cancel() error {
+	err := C.rados_aio_cancel(lib.io, lib.comp)
+	if int32(err) < 0 {
+		return errors.New("cannot not cancel async operation " + fmt.Sprintf("%v", err))
+	}
+	return nil
+}
