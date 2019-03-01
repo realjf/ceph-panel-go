@@ -3,13 +3,13 @@ package ceph
 import "testing"
 
 func TestNewLibRados(t *testing.T) {
-	librados := NewLibRados([]byte("ceph"), []byte("client.admin"))
-	err := librados.Rados_create()
+	librados := NewLibRados("ceph", "client.admin")
+	err := librados.Rados_create2(0)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 	t.Log("created a cluster handle")
-	err = librados.Rados_conf_read_file([]byte("/etc/ceph/ceph.conf"))
+	err = librados.Rados_conf_read_file("test")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
