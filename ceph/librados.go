@@ -49,6 +49,7 @@ type LibRados interface {
 	Rados_aio_flush() error
 	Rados_aio_flush_async() error
 	Rados_aio_cancel() error
+	Rados_aio_is_complete() error
 }
 
 type libRados struct {
@@ -255,5 +256,14 @@ func (lib *libRados) Rados_aio_cancel() error {
 	if int32(err) < 0 {
 		return errors.New("cannot not cancel async operation " + fmt.Sprintf("%v", err))
 	}
+	return nil
+}
+
+func (lib *libRados) Rados_aio_is_complete() error {
+	err := C.rados_aio_is_complete(lib.comp)
+	if int32(err) < 0 {
+		return errors.New("not complete")
+	}
+
 	return nil
 }
