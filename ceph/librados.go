@@ -21,16 +21,20 @@ import (
 )
 
 type LibRados interface {
+	// setup and teardown
 	Rados_create2(flags uint64) error
 	Rados_create() error
-	Rados_conf_read_file(path string) error
+	//Rados_ping_monitor(monId string, out *bytes.Buffer) error
 	Rados_connect() error
-	Rados_write(key string, value []byte, offset uint) error
 	Rados_shutdown()
+
+	// configure
+	Rados_conf_read_file(path string) error
 
 	Rados_ioctx_create(pool_name string) error
 	Rados_write_full(object_name string, value []byte) error
 	Rados_ioctx_destroy()
+	Rados_write(key string, value []byte, offset uint) error
 
 	Rados_setxattr(object_name string, attr_name string, value []byte) error
 	Rados_getxattr(object_name string, attr_name string, size uint) (interface{}, error)
@@ -39,7 +43,7 @@ type LibRados interface {
 
 	// 异步IO
 	Rados_aio_create_completion() error
-	Rados_aio_write(key string, value []byte, offset uint) error
+	Rados_aio_write(key string, value []byte, offset uint64) error
 	Rados_aio_read() (interface{}, error)
 	Rados_aio_write_full() error
 	Rados_aio_append() error
@@ -50,6 +54,17 @@ type LibRados interface {
 	Rados_aio_flush_async() error
 	Rados_aio_cancel() error
 	Rados_aio_is_complete() error
+
+	// Mon/OSD/PG commands
+	Rados_mon_command(cmd string, params []byte, out []byte) error
+	Rados_mgr_command(cmd string, params []byte, out []byte) error
+	Rados_buffer_free()
+	Rados_osd_command(osdId int, cmd string, params []byte, out []byte) error
+	Rados_pg_command(pgstr string, cmd string, params []byte, out []byte) error
+	Rados_monitor_log() error
+	Rados_monitor_log2() error
+
+	// Pools
 }
 
 type libRados struct {
@@ -57,6 +72,8 @@ type libRados struct {
 
 	cluster_name string // 集群名称
 	user_name string    // 用户名
+
+	config C.rados_config_t // 上下文配置
 
 	pool_name string    // 对象池
 
@@ -113,7 +130,7 @@ func (lib *libRados) Rados_connect() error {
 func (lib *libRados) Rados_write(key string, value []byte, offset uint) error {
 	buf := new(bytes.Buffer)
 	_ = binary.Write(buf, binary.LittleEndian, value)
-	err := C.rados_write(lib.io, (*C.char)(C.CString(key)), (*C.char)(unsafe.Pointer(&buf)), (C.ulong)(len(buf.Bytes())), (C.size_t)(offset))
+	err := C.rados_write(lib.io, (*C.char)(C.CString(key)), (*C.char)(unsafe.Pointer(&buf)), (C.uint64_t)(len(buf.Bytes())), (C.size_t)(offset))
 	if int32(err) < 0 {
 		return errors.New("cannot write object to pool[" + string(lib.pool_name) + "] " + fmt.Sprintf("%v", err))
 	}
@@ -194,10 +211,10 @@ func (lib *libRados) Rados_aio_create_completion() error {
 	return nil
 }
 
-func (lib *libRados) Rados_aio_write(key string, value []byte, offset uint) error {
+func (lib *libRados) Rados_aio_write(key string, value []byte, offset uint64) error {
 	buf := new(bytes.Buffer)
 	_ = binary.Write(buf, binary.LittleEndian, value)
-	err := C.rados_aio_write(lib.io, (*C.char)(C.CString(key)), lib.comp, (*C.char)(unsafe.Pointer(&buf)), (C.ulong)(len(buf.Bytes())), (C.size_t)(offset))
+	err := C.rados_aio_write(lib.io, (*C.char)(C.CString(key)), lib.comp, (*C.char)(unsafe.Pointer(&buf)), (C.size_t)(len(buf.Bytes())), (C.uint64_t)(offset))
 	if int32(err) < 0 {
 		lib.Rados_aio_release()
 		lib.Rados_ioctx_destroy()
@@ -265,5 +282,101 @@ func (lib *libRados) Rados_aio_is_complete() error {
 		return errors.New("not complete")
 	}
 
+	return nil
+}
+
+
+func (lib *libRados) Rados_mon_command(cmd string, params []byte, out []byte) error {
+	var outs (**C.char)
+	var outlen (*C.size_t)
+
+	err := C.rados_mon_command(lib.cluster,
+		(**C.char)(unsafe.Pointer(&cmd)),
+		(C.size_t)(len([]byte(cmd))),
+		(*C.char)(unsafe.Pointer(&params)),
+		(C.size_t)(len(params)),
+		(**C.char)(unsafe.Pointer(&out)),
+		(*C.size_t)(unsafe.Pointer(uintptr(len(out)))),
+		outs,
+		outlen)
+	if int32(err) < 0 {
+		return errors.New("mon command execute fail " + fmt.Sprintf("%v", err))
+	}
+
+	return nil
+}
+
+func (lib *libRados) Rados_mgr_command(cmd string, params []byte, out []byte) error {
+	var outs (**C.char)
+	var outlen (*C.size_t)
+
+	err := C.rados_mgr_command(lib.cluster,
+		(**C.char)(unsafe.Pointer(&cmd)),
+		(C.size_t)(len([]byte(cmd))),
+		(*C.char)(unsafe.Pointer(&params)),
+		(C.size_t)(len(params)),
+		(**C.char)(unsafe.Pointer(&out)),
+		(*C.size_t)(unsafe.Pointer(uintptr(len(out)))),
+		outs,
+		outlen)
+	if int32(err) < 0 {
+		return errors.New("mgr command execute fail " + fmt.Sprintf("%v", err))
+	}
+
+	return nil
+}
+
+func (lib *libRados) Rados_buffer_free() {
+
+}
+
+func (lib *libRados) Rados_osd_command(osdId int, cmd string, params []byte, out []byte) error {
+	var outs (**C.char)
+	var outlen (*C.size_t)
+
+	err := C.rados_osd_command(lib.cluster,
+		(C.int)(osdId),
+		(**C.char)(unsafe.Pointer(&cmd)),
+		(C.size_t)(len([]byte(cmd))),
+		(*C.char)(unsafe.Pointer(&params)),
+		(C.size_t)(len(params)),
+		(**C.char)(unsafe.Pointer(&out)),
+		(*C.size_t)(unsafe.Pointer(uintptr(len(out)))),
+		outs,
+		outlen)
+	if int32(err) < 0 {
+		return errors.New("osd command execute fail " + fmt.Sprintf("%v", err))
+	}
+
+	return nil
+}
+
+func (lib *libRados) Rados_pg_command(pgstr string, cmd string, params []byte, out []byte) error {
+	var outs (**C.char)
+	var outlen (*C.size_t)
+
+	err := C.rados_pg_command(lib.cluster,
+		(*C.char)(unsafe.Pointer(&pgstr)),
+		(**C.char)(unsafe.Pointer(&cmd)),
+		(C.size_t)(len([]byte(cmd))),
+		(*C.char)(unsafe.Pointer(&params)),
+		(C.size_t)(len(params)),
+		(**C.char)(unsafe.Pointer(&out)),
+		(*C.size_t)(unsafe.Pointer(uintptr(len(out)))),
+		outs,
+		outlen)
+	if int32(err) < 0 {
+		return errors.New("pg command execute fail " + fmt.Sprintf("%v", err))
+	}
+
+	return nil
+}
+
+func (lib *libRados) Rados_monitor_log() error {
+
+	return nil
+}
+
+func (lib *libRados) Rados_monitor_log2() error {
 	return nil
 }

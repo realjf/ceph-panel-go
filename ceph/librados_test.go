@@ -25,11 +25,6 @@ func TestNewLibRados(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 	t.Log("create io context")
-	err = librados.Rados_write_full("greeting", []byte("hello"))
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
 
 	t.Fatalf("com")
 }
