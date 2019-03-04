@@ -54,7 +54,7 @@ ant
 ```
 jar文件位于rados-java/target
 
-** 4. 第四步：把rados的jar文件复制到统一位置（/usr/share/java），并确保它和jna jar都位于jvm路径里 **
+**4. 第四步：把rados的jar文件复制到统一位置（/usr/share/java），并确保它和jna jar都位于jvm路径里**
 ```sh
 sudo cp target/rados-0.1.3.jar /usr/share/java/rados-0.1.3.jar
 sudo ln -s /usr/share/java/jna-3.2.7.jar /usr/lib/jvm/default-java/jre/lib/ext/jna-3.2.7.jar
