@@ -34,6 +34,7 @@ type LibRados interface {
 
 	Rados_write_full(object_name string, value []byte) error
 	Rados_write(key string, value []byte, offset uint) error
+	Rados_Read(key string, size uint, offset uint64) (out bytes.Buffer, err error)
 
 	Rados_setxattr(object_name string, attr_name string, value []byte) error
 	Rados_getxattr(object_name string, attr_name string, size uint) (interface{}, error)
@@ -158,6 +159,15 @@ func (lib *libRados) Rados_write(key string, value []byte, offset uint) error {
 	}
 
 	return nil
+}
+
+func (lib *libRados) Rados_Read(key string, size uint, offset uint64) (out bytes.Buffer, err error) {
+	err1 := C.rados_read(lib.io, (*C.char)(C.CString(key)), (*C.char)(unsafe.Pointer(&out)), (C.uint64_t)(size), (C.size_t)(offset))
+	if int32(err1) < 0 {
+		return out, errors.New("cannot read object to pool[" + string(lib.pool_name) + "] " + fmt.Sprintf("%v", err1))
+	}
+
+	return out, nil
 }
 
 // 关闭集群句柄
