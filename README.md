@@ -29,7 +29,7 @@ sudo yum install python-rados
 ```
 
 #### librados for java
-** 1. 第一步：安装jna.jar包 **
+**1. 第一步：安装jna.jar包**
 
 Debian/Ubuntu
 
@@ -42,12 +42,12 @@ sudo yum install jna
 ```
 > jar文件位于/usr/share/java
 
-** 2. 第二步：克隆rados-java软件库 **
+**2. 第二步：克隆rados-java软件库**
 
 ```sh
 git clone --recursive https://github.com/ceph/rados-java.git
 ```
-** 3. 第三步：构建rados-java软件库 **
+**3. 第三步：构建rados-java软件库**
 ```sh
 cd rados-java
 ant
@@ -62,7 +62,7 @@ sudo ln -s /usr/share/java/rados-0.1.3.jar  /usr/lib/jvm/default-java/jre/lib/ex
 ```
 
 #### librados for php
-** 1. 安装php-dev **
+**1. 安装php-dev**
 Debian/Ubuntu
 ```sh
 sudo apt-get install php5-dev build-essential
@@ -71,11 +71,11 @@ CentOS/RHEL
 ```sh
 sudo yum install php-devel
 ```
-** 2. 克隆phprados源码库 **
+**2. 克隆phprados源码库**
 ```sh
 git clone https://github.com/ceph/phprados.git
 ```
-** 3. 构建phprados **
+**3. 构建phprados**
 ```sh
 cd phprados
 phpize
@@ -83,7 +83,7 @@ phpize
 make
 sudo make install
 ```
-** 4. 把下列配置加入php.ini以启用phprados **
+**4. 把下列配置加入php.ini以启用phprados**
 ```sh
 extension=rados.so
 ```
