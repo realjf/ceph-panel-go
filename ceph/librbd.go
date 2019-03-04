@@ -1,10 +1,12 @@
 package ceph
 
 type LibRBD interface {
-
+	LibRados
 }
 
 type libRBD struct {
+	libRados
+
 
 }
 
