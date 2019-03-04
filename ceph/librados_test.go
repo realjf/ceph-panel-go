@@ -26,5 +26,14 @@ func TestNewLibRados(t *testing.T) {
 	}
 	t.Log("create io context")
 
+	err = librados.Rados_cluster_stat()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	t.Logf("%v", librados.Stat)
+
+	major, minor, extra := librados.Rados_version()
+	t.Logf("major %d minor %d extra %d", major, minor, extra)
+
 	t.Fatalf("com")
 }
