@@ -33,7 +33,6 @@ type LibRados interface {
 
 
 	Rados_write_full(object_name string, value []byte) error
-
 	Rados_write(key string, value []byte, offset uint) error
 
 	Rados_setxattr(object_name string, attr_name string, value []byte) error
@@ -67,9 +66,17 @@ type LibRados interface {
 	// Pools
 	Rados_pool_list() (out []byte, err error)
 	Rados_pool_delete(pool_name string) error
-
 	Rados_ioctx_create(pool_name string) error
 	Rados_ioctx_destroy()
+
+	// Snapshots
+	Rados_ioctx_snap_create(snapname string) error
+	Rados_ioctx_snap_remove(snapname string) error
+	Rados_ioctx_snap_rollback(snapname string, key string) error
+	Rados_rollback(snapname string, key string) error
+	Rados_ioctx_snap_set_read(snap C.rados_snap_t) error
+	Rados_ioctx_snap_list(snaps *C.rados_snap_t) (out []byte, err error)
+
 }
 
 type libRados struct {
@@ -81,6 +88,8 @@ type libRados struct {
 	config C.rados_config_t // 上下文配置
 
 	pool_name string    // 对象池
+
+	snapshot C.rados_snap_t // 快照
 
 	io C.rados_ioctx_t // 同步IO上下文
 
@@ -396,3 +405,26 @@ func (lib *libRados) Rados_pool_delete(pool_name string) error {
 	return nil
 }
 
+func (lib *libRados) Rados_ioctx_snap_create(snapname string) error {
+	return nil
+}
+
+func (lib *libRados) Rados_ioctx_snap_remove(snapname string) error {
+	return nil
+}
+
+func (lib *libRados) Rados_ioctx_snap_rollback(snapname string, key string) error {
+	return nil
+}
+
+func (lib *libRados) Rados_rollback(snapname string, key string) error {
+	return nil
+}
+
+func (lib *libRados) Rados_ioctx_snap_set_read(snap C.rados_snap_t) error {
+	return nil
+}
+
+func (lib *libRados) Rados_ioctx_snap_list(snaps *C.rados_snap_t) (out []byte, err error) {
+	return
+}
