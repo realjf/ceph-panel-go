@@ -10,7 +10,5 @@ type libcephfs struct {
 }
 
 func NewLibCephfs() *libcephfs {
-	return &libcephfs{
-
-	}
+	return &libcephfs{}
 }

@@ -6,14 +6,8 @@ type LibRBD interface {
 
 type libRBD struct {
 	libRados
-
-
 }
 
 func NewLibRBD() *libRBD {
-	return &libRBD{
-
-	}
+	return &libRBD{}
 }
-
-

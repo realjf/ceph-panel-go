@@ -1,15 +1,15 @@
 package main
 
 import (
-	"flag"
 	"ceph-panel-go/config"
+	"ceph-panel-go/db"
 	"ceph-panel-go/exception"
 	"ceph-panel-go/middleware"
 	"ceph-panel-go/router"
+	"flag"
 	"golang.org/x/net/http2"
 	"net/http"
 	"time"
-	"ceph-panel-go/db"
 )
 
 var (

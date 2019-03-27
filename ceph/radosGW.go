@@ -10,9 +10,5 @@ type radosGW struct {
 }
 
 func NewRadosGW() *radosGW {
-	return &radosGW{
-
-	}
+	return &radosGW{}
 }
-
-

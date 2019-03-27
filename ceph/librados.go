@@ -31,7 +31,6 @@ type LibRados interface {
 	// configure
 	Rados_conf_read_file(path string) error
 
-
 	Rados_write_full(object_name string, value []byte) error
 	Rados_write(key string, value []byte, offset uint) error
 	Rados_Read(key string, size uint, offset uint64) (out bytes.Buffer, err error)
@@ -39,7 +38,6 @@ type LibRados interface {
 	Rados_setxattr(object_name string, attr_name string, value []byte) error
 	Rados_getxattr(object_name string, attr_name string, size uint) (interface{}, error)
 	Rados_rmxattr(object_name string, attr_name string) error
-
 
 	// 异步IO
 	Rados_aio_create_completion() error
@@ -49,11 +47,12 @@ type LibRados interface {
 	Rados_aio_append() error
 	Rados_aio_release()
 	Rados_aio_wait_for_complete() // in memory
-	Rados_aio_wait_for_safe() // on disk
+	Rados_aio_wait_for_safe()     // on disk
 	Rados_aio_flush() error
 	Rados_aio_flush_async() error
 	Rados_aio_cancel() error
 	Rados_aio_is_complete() error
+	Rados_aio_is_safe() error
 
 	// Mon/OSD/PG commands
 	Rados_mon_command(cmd string, params []byte) (out []byte, err error)
@@ -90,11 +89,11 @@ type libRados struct {
 	cluster C.rados_t // 集群句柄
 
 	cluster_name string // 集群名称
-	user_name string    // 用户名
+	user_name    string // 用户名
 
 	config C.rados_config_t // 上下文配置
 
-	pool_name string    // 对象池
+	pool_name string // 对象池
 
 	snapshot C.rados_snap_t // 快照
 
@@ -108,7 +107,7 @@ type libRados struct {
 func NewLibRados(cluster_name string, user_name string) *libRados {
 	return &libRados{
 		cluster_name: cluster_name,
-		user_name: user_name,
+		user_name:    user_name,
 	}
 }
 
@@ -121,7 +120,7 @@ func (lib *libRados) Rados_create2(flags uint64) error {
 	return nil
 }
 
-func (lib *libRados) Rados_create() error  {
+func (lib *libRados) Rados_create() error {
 	err := C.rados_create(&lib.cluster, (*C.char)(nil))
 	if int32(err) < 0 {
 		return errors.New("Couldn't create the ceph cluster handle! " + fmt.Sprintf("%v", err))
@@ -147,7 +146,6 @@ func (lib *libRados) Rados_connect() error {
 
 	return nil
 }
-
 
 // 写入数据
 func (lib *libRados) Rados_write(key string, value []byte, offset uint) error {
@@ -203,8 +201,6 @@ func (lib *libRados) Rados_ioctx_destroy() {
 	C.rados_ioctx_destroy(lib.io)
 }
 
-
-
 // 设置属性值
 func (lib *libRados) Rados_setxattr(object_name string, attr_name string, value []byte) error {
 	buf := new(bytes.Buffer)
@@ -243,6 +239,14 @@ func (lib *libRados) Rados_aio_create_completion() error {
 	return nil
 }
 
+func (lib *libRados) Rados_aio_is_safe() error {
+	err := C.rados_aio_is_safe(lib.comp)
+	if int32(err) < 0 {
+		return errors.New("asynchronous operation is not safe. " + fmt.Sprintf("%v", err))
+	}
+	return nil
+}
+
 func (lib *libRados) Rados_aio_write(key string, value []byte, offset uint64) error {
 	buf := new(bytes.Buffer)
 	_ = binary.Write(buf, binary.LittleEndian, value)
@@ -259,7 +263,7 @@ func (lib *libRados) Rados_aio_write(key string, value []byte, offset uint64) er
 
 func (lib *libRados) Rados_aio_read() (interface{}, error) {
 
-	return nil,nil
+	return nil, nil
 }
 
 func (lib *libRados) Rados_aio_write_full() error {
@@ -316,7 +320,6 @@ func (lib *libRados) Rados_aio_is_complete() error {
 
 	return nil
 }
-
 
 func (lib *libRados) Rados_mon_command(cmd string, params []byte) (out []byte, err error) {
 	var outs (**C.char)
@@ -412,7 +415,6 @@ func (lib *libRados) Rados_monitor_log() error {
 func (lib *libRados) Rados_monitor_log2() error {
 	return nil
 }
-
 
 func (lib *libRados) Rados_pool_list() (out []byte, err error) {
 
